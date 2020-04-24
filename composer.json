@@ -1,0 +1,23 @@
+{
+    "name": "tiptone/gbest",
+    "description": "Web Store Watcher",
+    "type": "project",
+    "require": {
+        "guzzlehttp/guzzle": "^6.5",
+        "zf1/zend-mail": "^1.12",
+        "zf1/zend-registry": "^1.12",
+        "monolog/monolog": "^2.0"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Brian Tipton",
+            "email": "brian.tipton@shsu.edu"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Tiptone\\Gbest\\": "src/"
+        }
+    }
+}

@@ -1,2 +1,10 @@
-# gbest
-Tools for G
+# Geebist
+
+## Web Store Watcher
+
+Model
+- name
+- description
+- url
+- items[]
+

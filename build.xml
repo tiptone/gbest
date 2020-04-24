@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="gbest" basedir="." default="build">
+    <property name="build.dir" value="build" />
+    <property name="build.name" value="gbest" />
+    <property name="build.version" value="0.1" />
+    <property name="build.target" value="./${build.dir}/${build.name}-${build.version}" />
+    <property name="build.env" value="development" override="true" />
+    
+    <target name="build:clean" description="Cleans up build artifacts">
+        <delete dir="${build.dir}" />
+        <mkdir dir="${build.dir}" />
+        <mkdir dir="${build.target}" />
+    </target>
+    
+    <target name="build:composer">
+        <if>
+            <equals arg1="${build.env}" arg2="production" />
+            <then>
+                <composer composer="/usr/local/bin/composer" command="install">
+                    <arg value="--working-dir" />
+                    <arg path="." />
+                    <arg value="--no-dev" />
+                </composer>
+            </then>
+            <else>
+                <composer composer="/usr/local/bin/composer" command="install">
+                    <arg value="--working-dir" />
+                    <arg path="." />
+                </composer>
+            </else>
+        </if>
+    </target>
+    
+    <target name="build:files">
+        <copy todir="${build.target}">
+            <fileset dir=".">
+                <include name="**" />
+                <exclude name="**/.*" />
+                <exclude name="**/Jenkinsfile" />
+                <exclude name="**/README.md" />
+                <exclude name="build/**" />
+                <exclude name="**/build.xml" />
+                <exclude name="**/composer.*" />
+            </fileset>
+        </copy>
+    </target>
+    
+    <target name="deploy:clean">
+        <delete file="${build.target}.tar.gz" />
+    </target>
+    
+    <target name="deploy:create-package">
+        <property name="build.dist" value="${build.target}.tar.gz" />
+        
+        <echo>Creating dist package ${build.dist}</echo>
+        
+        <tar destfile="${build.dist}" compression="gzip">
+            <fileset dir="${build.dir}">
+                <include name="${build.name}-${build.version}" />
+            </fileset>
+        </tar>
+    </target>
+    
+    <target name="build" depends="build:clean, build:composer, build:files">
+        <echo>Build complete</echo>
+    </target>
+    
+    <target name="deploy" depends="deploy:clean, deploy:create-package">
+    	<echo>Deploy complete</echo>
+    </target>
+    
+</project>

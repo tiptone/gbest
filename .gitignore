@@ -1,4 +1,5 @@
 /vendor/
 /build/
 /data/
+/config/config.php
 .idea

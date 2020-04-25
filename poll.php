@@ -9,8 +9,8 @@ use GuzzleHttp\Client as GuzzleClient;
 
 $db = new SQLite3(__DIR__ . '/data/sites.db');
 
-$sid = GBEST_SID;
-$token = GBEST_TOKEN;
+$sid = TWILIO_SID;
+$token = TWILIO_TOKEN;
 
 try {
     $twilio = new TwilioClient($sid, $token);
@@ -70,15 +70,7 @@ foreach ($sites as $site) {
                 GBEST_CONTACT,
                 [
                     'body' => sprintf('%s/%s', $site['url'], $newItem),
-                    'from' => TIPTONE_PHONE
-                ]
-            );
-
-            $twilio->messages->create(
-                '+19367141591',
-                [
-                    'body' => sprintf('%s/%s', $site['url'], $newItem),
-                    'from' => TIPTONE_PHONE
+                    'from' => SID_PHONE
                 ]
             );
         } catch (TwilioException $e) {
@@ -86,10 +78,9 @@ foreach ($sites as $site) {
             exit(1);
         }
 
+        // add item to database
         $itemInsertStatement->bindParam(':siteid', $site['id']);
         $itemInsertStatement->bindParam(':name', $newItem);
         $itemInsertStatement->execute();
     }
 }
-
-echo 'done' . PHP_EOL;

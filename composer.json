@@ -6,7 +6,8 @@
         "guzzlehttp/guzzle": "^6.5",
         "zf1/zend-mail": "^1.12",
         "zf1/zend-registry": "^1.12",
-        "monolog/monolog": "^2.0"
+        "monolog/monolog": "^2.0",
+        "twilio/sdk": "^6.3"
     },
     "license": "MIT",
     "authors": [

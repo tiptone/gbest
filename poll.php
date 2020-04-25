@@ -7,8 +7,10 @@ use Twilio\Rest\Client as TwilioClient;
 use Twilio\Exceptions\ConfigurationException;
 use GuzzleHttp\Client as GuzzleClient;
 
-$sid = getenv('GBEST_SID');
-$token = getenv('GBEST_TOKEN');
+$db = new SQLite3(__DIR__ . '/data/sites.db');
+
+$sid = GBEST_SID;
+$token = GBEST_TOKEN;
 
 try {
     $twilio = new TwilioClient($sid, $token);
@@ -19,14 +21,75 @@ try {
 
 $guzzle = new GuzzleClient();
 
-$belmont = new Belmont($guzzle, $twilio);
-$belmont->loadItems(__DIR__ . '/data/Belmont.json');
+$sql = 'select id,
+          name,
+          url
+        from sites';
 
-try {
-    $belmont->search();
-} catch (Exception $e) {
-    echo $e->getMessage();
-    exit(1);
+$results = $db->query($sql);
+
+if ($results->numColumns()) {
+    while ($row = $results->fetchArray(SQLITE3_ASSOC)) {
+        $sites[] = $row;
+    }
 }
 
-$belmont->saveItems();
+$sql = 'select id,
+          name
+        from items
+        where siteid = :siteid';
+
+$itemStatement = $db->prepare($sql);
+
+$sql = 'insert into items (siteid, name) values (:siteid, :name)';
+
+$itemInsertStatement = $db->prepare($sql);
+
+foreach ($sites as $site) {
+    $items = [];
+
+    $itemStatement->bindParam(':siteid', $site['id']);
+    $itemResult = $itemStatement->execute();
+
+    if ($itemResult->numColumns()) {
+        while ($row = $itemResult->fetchArray(SQLITE3_ASSOC)) {
+            $items[] = $row['name'];
+        }
+    }
+    $itemResult->finalize();
+
+    $siteInstance = new $site['name']($guzzle);
+    $siteInstance->setItems($items);
+
+    $newItems = $siteInstance->search();
+
+    foreach ($newItems as $newItem) {
+        // send notification
+        try {
+            $twilio->messages->create(
+                GBEST_CONTACT,
+                [
+                    'body' => sprintf('%s/%s', $site['url'], $newItem),
+                    'from' => TIPTONE_PHONE
+                ]
+            );
+
+            $twilio->messages->create(
+                '+19367141591',
+                [
+                    'body' => sprintf('%s/%s', $site['url'], $newItem),
+                    'from' => TIPTONE_PHONE
+                ]
+            );
+        } catch (TwilioException $e) {
+            echo $e->getMessage();
+            exit(1);
+        }
+
+        $itemInsertStatement->bindParam(':siteid', $site['id']);
+        $itemInsertStatement->bindParam(':name', $newItem);
+        $itemInsertStatement->execute();
+    }
+}
+
+echo 'done' . PHP_EOL;

@@ -1,16 +1,16 @@
 <?php
 namespace Tiptone\Gbest;
 
-class Belmont extends Site
+class DgdMusic extends Site
 {
     public function search()
     {
-        $res = $this->guzzle->request('GET', 'http://belmont.limitedrun.com/');
+        $res = $this->guzzle->request('GET', 'https://merchnow.com/catalogs/showList?type=music&name=dance-gavin-dance&offset=0&limit=256&format=json');
 
-        $body = $res->getBody();
+        $json = json_decode($res->getBody());
 
         $doc = new \DOMDocument();
-        $doc->loadHTML($body);
+        $doc->loadHTML($json->Content);
 
         $nodes = $doc->getElementsByTagName('a');
 
@@ -19,8 +19,8 @@ class Belmont extends Site
         foreach ($nodes as $node) {
             foreach ($node->attributes as $attr) {
                 if ($attr->name == 'href') {
-                    if (substr($attr->value, 0, 10) == '/products/') {
-                        $item = substr($attr->value, 10);
+                    if (substr($attr->value, 0, 13) == '/products/v2/') {
+                        $item = substr($attr->value, 13);
 
                         if (!in_array($item, $this->items)) {
                             // add the item to avoid duplicate notifications

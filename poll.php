@@ -45,6 +45,14 @@ $sql = 'insert into items (siteid, name) values (:siteid, :name)';
 
 $itemInsertStatement = $db->prepare($sql);
 
+$sql = 'select phone
+        from client
+            join subscription on
+                client.id = clientid
+        where siteid = :siteid';
+
+$contactStatment = $db->prepare($sql);
+
 foreach ($sites as $site) {
     $items = [];
 
@@ -64,19 +72,27 @@ foreach ($sites as $site) {
     $newItems = $siteInstance->search();
 
     foreach ($newItems as $newItem) {
-        // send notification
-        try {
-            $twilio->messages->create(
-                GBEST_CONTACT,
-                [
-                    'body' => sprintf('%s/%s', $site['url'], $newItem),
-                    'from' => SID_PHONE
-                ]
-            );
-        } catch (TwilioException $e) {
-            echo $e->getMessage();
-            exit(1);
+        // send notification(s)
+        $contactStatment->bindParam(':siteid', $site['id']);
+        $contactResult = $contactStatment->execute();
+
+        if ($contactResult->numColumns()) {
+            while ($row = $contactResult->fetchArray(SQLITE3_ASSOC)) {
+                try {
+                    $twilio->messages->create(
+                        $row['phone'],
+                        [
+                            'body' => sprintf('%s/%s', $site['url'], $newItem),
+                            'from' => SID_PHONE
+                        ]
+                    );
+                } catch (TwilioException $e) {
+                    echo $e->getMessage();
+                    exit(1);
+                }
+            }
         }
+        $contactResult->finalize();
 
         // add item to database
         $itemInsertStatement->bindParam(':siteid', $site['id']);

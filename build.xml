@@ -2,7 +2,7 @@
 <project name="gbest" basedir="." default="build">
     <property name="build.dir" value="build" />
     <property name="build.name" value="gbest" />
-    <property name="build.version" value="0.1" />
+    <property name="build.version" value="1.0.0" />
     <property name="build.target" value="./${build.dir}/${build.name}-${build.version}" />
     <property name="build.env" value="development" override="true" />
     

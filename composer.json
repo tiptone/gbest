@@ -17,9 +17,6 @@
         }
     ],
     "autoload": {
-        "psr-4": {
-            "Tiptone\\Gbest\\": "src/"
-        },
         "files": [
             "config/config.php"
         ]

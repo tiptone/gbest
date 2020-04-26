@@ -2,7 +2,6 @@
 
 require_once 'vendor/autoload.php';
 
-use Tiptone\Gbest\Belmont;
 use Twilio\Rest\Client as TwilioClient;
 use Twilio\Exceptions\ConfigurationException;
 use GuzzleHttp\Client as GuzzleClient;
@@ -22,8 +21,10 @@ try {
 $guzzle = new GuzzleClient();
 
 $sql = 'select id,
-          name,
-          url
+          url,
+          pattern,
+          item_url,
+          content
         from sites';
 
 $results = $db->query($sql);
@@ -66,10 +67,38 @@ foreach ($sites as $site) {
     }
     $itemResult->finalize();
 
-    $siteInstance = new $site['name']($guzzle);
-    $siteInstance->setItems($items);
+    $res = $guzzle->request('GET', $site['url']);
 
-    $newItems = $siteInstance->search();
+    if ($site['content'] == 'json') {
+        $json = json_decode($res->getBody());
+
+        $doc = new \DOMDocument();
+        $doc->loadHTML($json->Content);
+    } else {
+        $body = $res->getBody();
+
+        $doc = new DOMDocument();
+        $doc->loadHTML($body);
+    }
+
+    $nodes = $doc->getElementsByTagName('a');
+
+    $newItems = [];
+
+    foreach ($nodes as $node) {
+        foreach ($node->attributes as $attr) {
+            if ($attr->name == 'href') {
+                if (substr($attr->value, 0, strlen($site['pattern'])) == $site['pattern']) {
+                    $item = substr($attr->value, strlen($site['pattern']));
+
+                    if (!in_array($item, $items) && trim($item) != '') {
+                        $items[] = $item;
+                        $newItems[] = $item;
+                    }
+                }
+            }
+        }
+    }
 
     foreach ($newItems as $newItem) {
         // send notification(s)
@@ -82,7 +111,7 @@ foreach ($sites as $site) {
                     $twilio->messages->create(
                         $row['phone'],
                         [
-                            'body' => sprintf('%s/%s', $site['url'], $newItem),
+                            'body' => sprintf('%s/%s', $site['item_url'], $newItem),
                             'from' => SID_PHONE
                         ]
                     );

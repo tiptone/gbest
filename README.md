@@ -1,10 +1,10 @@
-# Geebist
+# Gbest
 
 ## Web Store Watcher
 
-Model
-- name
-- description
-- url
-- items[]
-
+Currently Working:
+ - Belmont
+ - Blue Swan Records
+ - City And Color
+ - Dance Gavin Dance (Bundles & Music)
+ 
